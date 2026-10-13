@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chai Rush — Nazaakat Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+  :root{
+    --night:#1a0d12;
+    --night2:#2c1118;
+    --teal:#1b4a46;
+    --teal2:#0f2b29;
+    --gold:#e8b23d;
+    --gold2:#f4d27a;
+    --cream:#f6ecd2;
+    --rust:#c1440e;
+    --mint:#bfe3c6;
+    --pearl:#fbf3e3;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%; overflow:hidden;
+    font-family:'Poppins',sans-serif;
+    background:var(--night);
+    color:var(--cream);
+    -webkit-tap-highlight-color:transparent;
+    touch-action:none;
+  }
+  #stage{
+    position:relative;
+    width:100%; height:100vh; height:100dvh;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(232,178,61,0.18), transparent 55%),
+      linear-gradient(180deg, var(--night) 0%, var(--night2) 38%, var(--teal2) 78%, #081a18 100%);
+    overflow:hidden;
+  }
+  .star{position:absolute; width:2px; height:2px; background:var(--pearl); border-radius:50%; opacity:0.5;}
+  #lights{position:absolute; top:0; left:0; right:0; height:30px; display:flex; justify-content:space-between; padding:6px 10px 0; z-index:2; pointer-events:none;}
+  .bulb{width:9px; height:9px; border-radius:50%; background:var(--gold2); box-shadow:0 0 8px 2px var(--gold);}
+  #skyline{position:absolute; left:0; right:0; bottom:13%; height:30%; z-index:1; opacity:0.85; pointer-events:none;}
+  #skyline svg{width:100%; height:100%; display:block;}
+  #floor{
+    position:absolute; left:0; right:0; bottom:0; height:13%; z-index:2;
+    background-image:
+      linear-gradient(45deg, var(--cream) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--cream) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--cream) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--cream) 75%);
+    background-size: 46px 46px;
+    background-position: 0 0, 0 23px, 23px -23px, -23px 0px;
+    background-color:#120a0d;
+    border-top:3px solid var(--gold);
+    box-shadow:0 -6px 20px rgba(232,178,61,0.15);
+  }
+  #ticker-wrap{
+    position:absolute; left:0; right:0; bottom:13%; height:26px; z-index:3;
+    background:rgba(12,6,8,0.72);
+    border-top:1px solid rgba(232,178,61,0.4);
+    border-bottom:1px solid rgba(232,178,61,0.25);
+    overflow:hidden; backdrop-filter:blur(2px);
+  }
+  #ticker{position:absolute; white-space:nowrap; top:3px; left:0; font-size:12px; letter-spacing:0.3px; color:var(--gold2); opacity:0.85; font-weight:500;}
+  #ticker b{color:var(--gold); font-weight:800;}
+
+  header{
+    position:absolute; top:34px; left:0; right:0; z-index:6;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 16px;
+  }
+  .brand{font-family:'Bebas Neue', sans-serif; font-size:clamp(22px,5.2vw,36px); letter-spacing:1.5px; color:var(--gold2); text-shadow:0 0 14px rgba(232,178,61,0.5), 0 2px 0 rgba(0,0,0,0.4);}
+  .brand small{display:block; font-family:'Poppins',sans-serif; font-size:10px; letter-spacing:2px; font-weight:600; color:var(--mint); opacity:0.8;}
+  .hud{display:flex; gap:8px; align-items:center;}
+  .pill{
+    background:rgba(20,10,13,0.55); border:1.5px solid var(--gold); border-radius:999px;
+    padding:6px 13px; font-weight:800; font-size:clamp(12px,3.3vw,15px);
+    display:flex; align-items:center; gap:5px; min-width:58px; justify-content:center;
+    backdrop-filter:blur(6px); box-shadow:0 2px 10px rgba(0,0,0,0.3);
+  }
+  .pill.time{border-color:var(--rust); color:var(--mint);}
+  .pill.combo{border-color:var(--mint); color:var(--gold2);}
+
+  #cart{
+    position:absolute; bottom:14%; width:min(118px,20vw); height:auto;
+    transform:translateX(-50%); z-index:5; font-size:clamp(34px,8vw,52px);
+    filter:drop-shadow(0 8px 10px rgba(0,0,0,0.45));
+  }
+
+  .item{position:absolute; z-index:4; will-change:transform; font-size:clamp(30px,7vw,46px); line-height:1; user-select:none; filter:drop-shadow(0 4px 5px rgba(0,0,0,0.4));}
+  .item.jackpot{font-size:clamp(38px,8.5vw,56px);}
+
+  #popups{position:absolute; inset:0; pointer-events:none; z-index:7;}
+  .pop{position:absolute; font-weight:800; font-size:18px; color:var(--mint); white-space:nowrap;}
+  .pop.bad{color:#ff8a65;}
+  .pop.jackpot{color:var(--gold2); font-size:24px; text-shadow:0 0 10px var(--gold);}
+  .spark{position:absolute; width:8px; height:8px; border-radius:50%; pointer-events:none; z-index:7;}
+
+  .overlay{
+    position:absolute; inset:0; z-index:10; display:flex; align-items:center; justify-content:center;
+    background:rgba(10,5,7,0.88); text-align:center; padding:24px; backdrop-filter:blur(3px);
+  }
+  .overlay.hidden{display:none;}
+  .card{
+    max-width:440px; width:100%;
+    background:linear-gradient(180deg, rgba(27,74,70,0.9), rgba(15,43,41,0.95));
+    border:2px solid var(--gold); border-radius:20px; padding:30px 26px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.6), inset 0 0 40px rgba(232,178,61,0.06);
+  }
+  .card h1{font-family:'Bebas Neue', sans-serif; font-size:clamp(34px,9vw,54px); margin:0 0 2px; letter-spacing:1.5px; color:var(--gold2); text-shadow:0 0 18px rgba(232,178,61,0.4);}
+  .card .tag{font-size:12px; letter-spacing:2px; color:var(--mint); opacity:0.85; margin-bottom:16px; font-weight:600;}
+  .card p{margin:0 0 16px; color:var(--cream); opacity:0.92; font-size:14.5px; line-height:1.55;}
+  .card .score-line{font-size:20px; font-weight:800; margin-bottom:4px; color:var(--gold2);}
+  .card .slang{font-size:16px; font-style:italic; color:var(--mint); margin-bottom:10px;}
+  .card .sub{font-size:12.5px; opacity:0.75; margin-bottom:14px;}
+  button.cta{
+    font-family:'Poppins',sans-serif; font-weight:800; font-size:16px; padding:13px 26px;
+    border-radius:999px; border:none; cursor:pointer; color:var(--pearl);
+    box-shadow:0 6px 0 #6e2406, 0 10px 24px rgba(193,68,14,0.4); transition:transform 0.08s ease;
+    background:linear-gradient(135deg, var(--rust), #9c350a);
+    width:100%; margin-bottom:10px;
+  }
+  button.cta.secondary{
+    background:transparent; border:1.5px solid var(--mint); color:var(--mint);
+    box-shadow:none; font-size:14.5px; padding:11px 22px;
+  }
+  button.cta:active{transform:translateY(4px);}
+  .btnRow{display:flex; flex-direction:column; gap:2px;}
+
+  .legend{display:flex; gap:12px; justify-content:center; margin:14px 0 18px; font-size:12.5px; flex-wrap:wrap; color:var(--cream); opacity:0.9;}
+  .legend span{display:flex; align-items:center; gap:5px;}
+
+  footer.credit{position:absolute; bottom:6px; right:10px; z-index:5; font-size:10.5px; opacity:0.45;}
+
+  .muteBtn, .modeBtn{
+    position:absolute; top:36px; z-index:12;
+    background:rgba(20,10,13,0.55); border:1.5px solid var(--gold); color:var(--gold2);
+    border-radius:50%; width:30px; height:30px; font-size:13px; cursor:pointer; display:none;
+  }
+  .muteBtn{right:16px;}
+  .modeBtn{right:54px;}
+
+  #camPreviewWrap{
+    position:absolute; top:78px; left:16px; z-index:12;
+    width:96px; height:72px; border-radius:12px; overflow:hidden;
+    border:2px solid var(--gold); box-shadow:0 6px 16px rgba(0,0,0,0.5);
+    display:none; background:#000;
+  }
+  #camVideo{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
+  #camDot{
+    position:absolute; top:0; bottom:0; width:3px; background:var(--gold2);
+    box-shadow:0 0 6px var(--gold); transform:translateX(-50%); display:none;
+  }
+  #camStatus{
+    position:absolute; top:152px; left:16px; z-index:12;
+    font-size:11px; color:var(--mint); background:rgba(12,6,8,0.6);
+    padding:3px 8px; border-radius:8px; display:none; max-width:160px;
+  }
+
+  @media (prefers-reduced-motion: reduce){ * { animation-duration:0.001ms !important; } }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="stars"></div>
+  <div id="lights"></div>
+  <div id="skyline">
+    <svg viewBox="0 0 1200 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <g fill="#0c1715" opacity="0.95">
+        <rect x="0" y="230" width="1200" height="70"/>
+        <rect x="60" y="150" width="26" height="90"/><circle cx="73" cy="148" r="16"/>
+        <rect x="1100" y="150" width="26" height="90"/><circle cx="1113" cy="148" r="16"/>
+        <rect x="500" y="90" width="200" height="150"/>
+        <rect x="470" y="130" width="30" height="110"/><circle cx="485" cy="128" r="20"/>
+        <rect x="700" y="130" width="30" height="110"/><circle cx="715" cy="128" r="20"/>
+        <rect x="505" y="20" width="18" height="80"/><circle cx="514" cy="20" r="14"/>
+        <rect x="677" y="20" width="18" height="80"/><circle cx="686" cy="20" r="14"/>
+        <path d="M560 240 Q560 170 600 170 Q640 170 640 240 Z" fill="#1a0d12"/>
+        <path d="M520 240 L520 200 Q520 185 535 185 L545 185 Q560 185 560 200 L560 240 Z" fill="#1a0d12" opacity="0.6"/>
+        <path d="M640 240 L640 200 Q640 185 655 185 L665 185 Q680 185 680 200 L680 240 Z" fill="#1a0d12" opacity="0.6"/>
+        <ellipse cx="514" cy="10" rx="10" ry="6"/><ellipse cx="686" cy="10" rx="10" ry="6"/>
+        <rect x="120" y="190" width="40" height="50"/><rect x="170" y="205" width="50" height="35"/><rect x="230" y="180" width="35" height="60"/>
+        <rect x="950" y="195" width="45" height="45"/><rect x="1000" y="180" width="35" height="60"/><rect x="1040" y="205" width="50" height="35"/>
+      </g>
+    </svg>
+  </div>
+  <div id="floor"></div>
+  <div id="ticker-wrap"><div id="ticker"></div></div>
+
+  <header>
+    <div class="brand">CHAI RUSH<small>NAZAAKAT EDITION · HYDERABAD</small></div>
+    <div class="hud">
+      <div class="pill time">⏱ <span id="timeVal">45</span>s</div>
+      <div class="pill">★ <span id="scoreVal">0</span></div>
+      <div class="pill combo">×<span id="comboVal">1</span></div>
+    </div>
+  </header>
+  <button class="muteBtn" id="muteBtn">🔊</button>
+  <button class="modeBtn" id="modeBtn" title="Switch to manual controls">🎥</button>
+  <div id="camPreviewWrap"><video id="camVideo" autoplay playsinline muted></video><div id="camDot"></div></div>
+  <div id="camStatus"></div>
+
+  <div id="popups"></div>
+  <div id="cart">🛺</div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="card" id="startCard">
+      <h1>Chai Rush</h1>
+      <div class="tag">NAZAAKAT EDITION</div>
+      <p>Osmania biscuits and Irani chai are flying off the Charminar counter. Dodge the bill, and if a biryani handi drops, that's your jackpot.</p>
+      <div class="legend">
+        <span>🍪 +10</span><span>☕ +25 combo</span><span>🍛 +60 jackpot</span><span>🧾 −15 reset</span>
+      </div>
+      <div class="btnRow">
+        <button class="cta" id="camBtn">🎥 Play with Camera — move your hand</button>
+        <button class="cta secondary" id="startBtn">🖱 Play with Mouse / Keys</button>
+      </div>
+      <div class="sub" id="highScoreLine"></div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="endOverlay">
+    <div class="card" id="endCard">
+      <h1>Time's Up!</h1>
+      <div class="score-line" id="finalScoreLine">Score: 0</div>
+      <div class="slang" id="slangLine">Adhirindi!</div>
+      <div class="sub" id="newHighLine"></div>
+      <button class="cta" id="restartBtn">Play Again</button>
+    </div>
+  </div>
+
+  <footer class="credit">Vibe Coding Lounge · Challenge 1 + Biryani bonus</footer>
+</div>
+
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+const stage = document.getElementById('stage');
+const cart = document.getElementById('cart');
+const popups = document.getElementById('popups');
+const timeVal = document.getElementById('timeVal');
+const scoreVal = document.getElementById('scoreVal');
+const comboVal = document.getElementById('comboVal');
+const startOverlay = document.getElementById('startOverlay');
+const endOverlay = document.getElementById('endOverlay');
+const startBtn = document.getElementById('startBtn');
+const camBtn = document.getElementById('camBtn');
+const restartBtn = document.getElementById('restartBtn');
+const finalScoreLine = document.getElementById('finalScoreLine');
+const newHighLine = document.getElementById('newHighLine');
+const highScoreLine = document.getElementById('highScoreLine');
+const slangLine = document.getElementById('slangLine');
+const muteBtn = document.getElementById('muteBtn');
+const modeBtn = document.getElementById('modeBtn');
+const starsWrap = document.getElementById('stars');
+const lightsWrap = document.getElementById('lights');
+const tickerEl = document.getElementById('ticker');
+const camPreviewWrap = document.getElementById('camPreviewWrap');
+const camVideo = document.getElementById('camVideo');
+const camDot = document.getElementById('camDot');
+const camStatus = document.getElementById('camStatus');
+
+const GAME_LEN = 45;
+const GOOD_ITEMS = ['🍪','🍪','🍪','☕'];
+const BAD_ITEM = '🧾';
+const JACKPOT_ITEM = '🍛';
+
+const CATCH_SLANG = ['Adhirindi!','Full josh!','Hogaya set!','Mast hai, bhai!','Scene set!'];
+const MISS_SLANG = ['Arre yaar!','Scene off, bhai!','Bill aa gaya!','Thoda dhyaan se!'];
+const JACKPOT_SLANG = ['ADHIRINDI! Handi mila!','Biryani bonus, bhidu!','Full josh — jackpot!'];
+const END_SLANG = ['Adhirindi, well played!','Hogaya set — nice round!','Full josh, that was!','Shaandar, chalo ek aur!'];
+const SPOTS = ['Pista House','Shah Ghouse','Café 555','Nimrah Café & Bakery','Alpha Hotel','Paradise Biryani','Hotel Shadab','Bawarchi'];
+
+let score = 0, combo = 1, timeLeft = GAME_LEN;
+let running = false;
+let cartX = window.innerWidth / 2;
+let items = [];
+let spawnTimer = 0, spawnInterval = 1100;
+let lastTick = null, countdownAcc = 0;
+let rafId = null;
+let muted = false;
+let controlMode = 'manual'; // 'manual' | 'camera'
+
+/* ---------- sound ---------- */
+let actx = null;
+function ensureAudio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+function tone(freq, dur, type, gainVal, delay){
+  if(muted || !actx) return;
+  const t0 = actx.currentTime + (delay||0);
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(gainVal||0.2, t0+0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain).connect(actx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+function sfxCatch(){ tone(660,0.09,'triangle',0.18); tone(880,0.1,'triangle',0.14,0.05); }
+function sfxMiss(){ tone(160,0.18,'sawtooth',0.18); }
+function sfxCombo(){ tone(520,0.07,'square',0.12); tone(780,0.09,'square',0.1,0.06); }
+function sfxJackpot(){ [523,659,784,1046].forEach((f,i)=> tone(f,0.16,'triangle',0.2,i*0.08)); }
+function sfxStart(){ tone(440,0.1,'sine',0.15); tone(660,0.12,'sine',0.14,0.08); }
+function sfxEnd(){ tone(392,0.18,'sine',0.16); tone(330,0.2,'sine',0.14,0.14); tone(262,0.3,'sine',0.14,0.28); }
+
+muteBtn.addEventListener('click', ()=>{ muted = !muted; muteBtn.textContent = muted ? '🔇' : '🔊'; });
+modeBtn.addEventListener('click', ()=>{
+  if(controlMode === 'camera'){
+    stopCamera();
+    controlMode = 'manual';
+    modeBtn.textContent = '🎥';
+    camStatus.style.display = 'none';
+  }
+});
+
+/* ---------- camera / hand tracking ---------- */
+let handLandmarker = null;
+let handLandmarkerReady = null;
+let camStream = null;
+let lastVideoTime = -1;
+
+function preloadHandModel(){
+  handLandmarkerReady = (async () => {
+    const vision = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+    );
+    handLandmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        delegate: "GPU"
+      },
+      runningMode: "VIDEO",
+      numHands: 1
+    });
+    return true;
+  })().catch(()=> false);
+}
+preloadHandModel();
+
+async function startCamera(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    throw new Error('getUserMedia unsupported');
+  }
+  camStream = await navigator.mediaDevices.getUserMedia({ video:{ width:320, height:240, facingMode:'user' }, audio:false });
+  camVideo.srcObject = camStream;
+  await camVideo.play();
+  const ok = await handLandmarkerReady;
+  if(!ok || !handLandmarker) throw new Error('model not ready');
+}
+
+function stopCamera(){
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream = null; }
+  camPreviewWrap.style.display = 'none';
+  camDot.style.display = 'none';
+}
+
+function detectLoop(){
+  if(controlMode !== 'camera' || !handLandmarker){ return; }
+  if(camVideo.readyState >= 2 && camVideo.currentTime !== lastVideoTime){
+    lastVideoTime = camVideo.currentTime;
+    const result = handLandmarker.detectForVideo(camVideo, performance.now());
+    if(result.landmarks && result.landmarks.length > 0){
+      const palm = result.landmarks[0][9];
+      const normX = palm.x;
+      const r = stageRect();
+      cartX = (1 - normX) * r.width;
+      placeCart();
+      camDot.style.left = ((1 - normX) * 100) + '%';
+      camDot.style.display = 'block';
+    } else {
+      camDot.style.display = 'none';
+    }
+  }
+  requestAnimationFrame(detectLoop);
+}
+
+/* ---------- decorative scene ---------- */
+function buildStars(){
+  const r = stage.getBoundingClientRect();
+  for(let i=0;i<40;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random()*r.width + 'px';
+    s.style.top = Math.random()*r.height*0.4 + 'px';
+    starsWrap.appendChild(s);
+    gsap.to(s, {opacity: 0.1+Math.random()*0.6, duration: 1+Math.random()*2, repeat:-1, yoyo:true, delay:Math.random()*2});
+  }
+}
+function buildLights(){
+  for(let i=0;i<22;i++){
+    const b = document.createElement('div');
+    b.className = 'bulb';
+    lightsWrap.appendChild(b);
+    gsap.to(b, {opacity:0.35, duration:0.8+Math.random()*1.2, repeat:-1, yoyo:true, delay:Math.random()*2, ease:'sine.inOut'});
+  }
+}
+function buildTicker(){
+  const text = SPOTS.map(s=>'<b>★</b> '+s).join('&nbsp;&nbsp;&nbsp;&nbsp;');
+  tickerEl.innerHTML = "🍽 Hyderabad's best — unlisted by any app: &nbsp;&nbsp;" + text + '&nbsp;&nbsp;&nbsp;&nbsp;' + text;
+  requestAnimationFrame(()=>{
+    const w = tickerEl.offsetWidth / 2;
+    gsap.fromTo(tickerEl, {x:0}, {x:-w, duration:22, repeat:-1, ease:'none'});
+  });
+}
+
+function getHigh(){ try{ return parseInt(localStorage.getItem('chaiRushHighCam')||'0',10);}catch(e){return 0;} }
+function setHigh(v){ try{ localStorage.setItem('chaiRushHighCam', String(v)); }catch(e){} }
+highScoreLine.textContent = 'Best: ' + getHigh();
+
+function stageRect(){ return stage.getBoundingClientRect(); }
+function placeCart(){
+  const r = stageRect();
+  const half = cart.offsetWidth / 2 || 55;
+  cartX = Math.max(half, Math.min(r.width - half, cartX));
+  cart.style.left = cartX + 'px';
+}
+function moveCartTo(clientX){
+  const r = stageRect();
+  cartX = clientX - r.left;
+  placeCart();
+}
+stage.addEventListener('mousemove', (e)=>{ if(running) moveCartTo(e.clientX); });
+stage.addEventListener('touchmove', (e)=>{ if(running && e.touches[0]) moveCartTo(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+
+let keyLeft=false, keyRight=false;
+window.addEventListener('keydown', (e)=>{ if(e.key==='ArrowLeft') keyLeft=true; if(e.key==='ArrowRight') keyRight=true; });
+window.addEventListener('keyup', (e)=>{ if(e.key==='ArrowLeft') keyLeft=false; if(e.key==='ArrowRight') keyRight=false; });
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function popup(x,y,text,cls){
+  const el = document.createElement('div');
+  el.className = 'pop' + (cls ? ' '+cls : '');
+  el.textContent = text;
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  popups.appendChild(el);
+  gsap.fromTo(el, {y:0, opacity:1, scale: cls==='jackpot'?0.6:1}, {
+    y:-60, opacity:0, scale: cls==='jackpot'?1.3:1.1, duration: cls==='jackpot'?1.1:0.7,
+    ease:'power2.out', onComplete:()=> el.remove()
+  });
+}
+function burst(x,y,color,count){
+  for(let i=0;i<(count||10);i++){
+    const s = document.createElement('div');
+    s.className='spark'; s.style.left = x+'px'; s.style.top = y+'px'; s.style.background = color;
+    popups.appendChild(s);
+    const ang = Math.random()*Math.PI*2;
+    const dist = 30 + Math.random()*60;
+    gsap.to(s, { x: Math.cos(ang)*dist, y: Math.sin(ang)*dist - 10, opacity:0, scale:0.2, duration:0.5+Math.random()*0.4, ease:'power2.out', onComplete:()=> s.remove() });
+  }
+}
+function screenShake(){
+  gsap.fromTo(stage, {x:0}, {x:-8, duration:0.05, repeat:5, yoyo:true, ease:'power1.inOut', onComplete:()=> gsap.set(stage,{x:0})});
+}
+
+function spawnItem(){
+  const r = stageRect();
+  const roll = Math.random();
+  let isBad=false, isJackpot=false, glyph;
+  if(roll < 0.06){ isJackpot=true; glyph = JACKPOT_ITEM; }
+  else if(roll < 0.24){ isBad=true; glyph = BAD_ITEM; }
+  else { glyph = pick(GOOD_ITEMS); }
+
+  const el = document.createElement('div');
+  el.className = 'item' + (isJackpot ? ' jackpot' : '');
+  el.textContent = glyph;
+  const size = 40;
+  const x = size + Math.random() * (r.width - size*2);
+  el.style.left = x + 'px'; el.style.top = '-40px';
+  stage.appendChild(el);
+  gsap.set(el, {rotation: (Math.random()-0.5)*20});
+  gsap.to(el, {rotation: (Math.random()-0.5)*20, duration:1+Math.random(), repeat:-1, yoyo:true, ease:'sine.inOut'});
+
+  items.push({ el, x, y:-40, speed: (isJackpot? 70 : 90) + Math.random()*70 + (GAME_LEN - timeLeft) * 2.2, glyph, isBad, isJackpot, caught:false });
+}
+
+function update(dt){
+  if(controlMode === 'manual'){
+    const speed = 420;
+    if(keyLeft) { cartX -= speed * dt; placeCart(); }
+    if(keyRight){ cartX += speed * dt; placeCart(); }
+  }
+
+  const r = stageRect();
+  const catchY = r.height * 0.84;
+  const cartHalf = (cart.offsetWidth || 55) / 2;
+
+  for(let i=items.length-1;i>=0;i--){
+    const it = items[i];
+    it.y += it.speed * dt;
+    it.el.style.top = it.y + 'px';
+
+    if(!it.caught && it.y >= catchY - 22 && it.y <= catchY + 22){
+      if(Math.abs(it.x - cartX) < cartHalf + 12){
+        it.caught = true;
+        if(it.isBad){
+          score = Math.max(0, score - 15); combo = 1;
+          popup(it.x, it.y, pick(MISS_SLANG)+' −15', 'bad');
+          screenShake(); sfxMiss();
+        } else if(it.isJackpot){
+          const gain = Math.round(60 * combo);
+          score += gain; combo = Math.min(8, combo + 1.5);
+          popup(it.x, it.y, pick(JACKPOT_SLANG)+' +'+gain, 'jackpot');
+          burst(it.x, it.y, '#e8b23d', 22);
+          gsap.fromTo(stage, {scale:1}, {scale:1.015, duration:0.12, yoyo:true, repeat:1, ease:'power1.inOut'});
+          sfxJackpot();
+        } else {
+          const gain = Math.round((it.glyph === '☕' ? 25 : 10) * combo);
+          score += gain; combo = Math.min(6, combo + (it.glyph === '☕' ? 1 : 0.34));
+          popup(it.x, it.y, pick(CATCH_SLANG)+' +'+gain, '');
+          burst(it.x, it.y, it.glyph==='☕' ? '#bfe3c6' : '#c88a3f', 8);
+          if(it.glyph==='☕') sfxCombo(); else sfxCatch();
+        }
+        gsap.fromTo(cart, {scale:1.25}, {scale:1, duration:0.25, ease:'elastic.out(1,0.5)'});
+        scoreVal.textContent = score;
+        comboVal.textContent = combo.toFixed(1).replace(/\.0$/,'');
+        gsap.fromTo('.pill', {scale:1}, {scale:1.08, duration:0.12, yoyo:true, repeat:1});
+        it.el.remove(); items.splice(i,1); continue;
+      }
+    }
+    if(it.y > r.height + 40){ it.el.remove(); items.splice(i,1); }
+  }
+}
+
+function frame(ts){
+  if(!running) return;
+  if(lastTick === null) lastTick = ts;
+  const dt = Math.min(0.05, (ts - lastTick) / 1000);
+  lastTick = ts;
+
+  spawnTimer += dt*1000;
+  const progress = 1 - (timeLeft / GAME_LEN);
+  const curInterval = Math.max(360, spawnInterval - progress*650);
+  if(spawnTimer > curInterval){ spawnTimer = 0; spawnItem(); }
+
+  update(dt);
+
+  countdownAcc += dt;
+  if(countdownAcc >= 1){
+    countdownAcc -= 1; timeLeft -= 1;
+    timeVal.textContent = Math.max(0, timeLeft);
+    if(timeLeft <= 5 && timeLeft > 0){
+      gsap.fromTo('.pill.time', {scale:1}, {scale:1.15, duration:0.15, yoyo:true, repeat:1});
+    }
+    if(timeLeft <= 0){ endGame(); return; }
+  }
+  rafId = requestAnimationFrame(frame);
+}
+
+function endGame(){
+  running = false;
+  cancelAnimationFrame(rafId);
+  items.forEach(it => it.el.remove()); items = [];
+  finalScoreLine.textContent = 'Score: ' + score;
+  slangLine.textContent = pick(END_SLANG);
+  const high = getHigh();
+  if(score > high){ setHigh(score); newHighLine.textContent = '🏆 New best!'; }
+  else { newHighLine.textContent = 'Best: ' + high; }
+  endOverlay.classList.remove('hidden');
+  gsap.fromTo('#endCard', {y:30, opacity:0, scale:0.9}, {y:0, opacity:1, scale:1, duration:0.5, ease:'back.out(1.6)'});
+  sfxEnd();
+  stopCamera();
+}
+
+function beginRound(){
+  ensureAudio();
+  score = 0; combo = 1; timeLeft = GAME_LEN;
+  scoreVal.textContent = '0'; comboVal.textContent = '1'; timeVal.textContent = GAME_LEN;
+  spawnTimer = 0; countdownAcc = 0; lastTick = null;
+  items.forEach(it => it.el.remove()); items = [];
+  cartX = window.innerWidth/2;
+  placeCart();
+  startOverlay.classList.add('hidden');
+  endOverlay.classList.add('hidden');
+  muteBtn.style.display = 'block';
+  running = true;
+  sfxStart();
+  rafId = requestAnimationFrame(frame);
+}
+
+startBtn.addEventListener('click', ()=>{
+  controlMode = 'manual';
+  modeBtn.style.display = 'none';
+  camPreviewWrap.style.display = 'none';
+  camStatus.style.display = 'none';
+  beginRound();
+});
+
+camBtn.addEventListener('click', async ()=>{
+  camBtn.textContent = '🎥 Connecting camera…';
+  camBtn.disabled = true;
+  try {
+    await startCamera();
+    controlMode = 'camera';
+    camPreviewWrap.style.display = 'block';
+    modeBtn.style.display = 'block';
+    modeBtn.textContent = '🖱';
+    camStatus.style.display = 'block';
+    camStatus.textContent = 'Move your hand left/right';
+    setTimeout(()=>{ camStatus.style.display = 'none'; }, 3500);
+    beginRound();
+    lastVideoTime = -1;
+    detectLoop();
+  } catch(err){
+    controlMode = 'manual';
+    camStatus.style.display = 'block';
+    camStatus.textContent = 'Camera unavailable — using mouse/keys';
+    setTimeout(()=>{ camStatus.style.display = 'none'; }, 3000);
+    beginRound();
+  } finally {
+    camBtn.textContent = '🎥 Play with Camera — move your hand';
+    camBtn.disabled = false;
+  }
+});
+
+restartBtn.addEventListener('click', ()=>{
+  if(controlMode === 'camera' && camStream){
+    beginRound();
+    lastVideoTime = -1;
+    detectLoop();
+  } else {
+    controlMode = 'manual';
+    modeBtn.style.display = 'none';
+    beginRound();
+  }
+});
+
+window.addEventListener('resize', placeCart);
+
+placeCart();
+buildStars();
+buildLights();
+buildTicker();
+gsap.from('#startCard', {y:40, opacity:0, duration:0.7, ease:'back.out(1.5)'});
+gsap.to('#camBtn', {scale:1.03, duration:0.7, repeat:-1, yoyo:true, ease:'sine.inOut'});
+</script>
+</body>
+</html>
